@@ -57,6 +57,11 @@ def train_one_epoch(model: torch.nn.Module,
             sys.exit(1)
 
         total_loss, loss_mae, sim_loss, loss_sr = total_loss / accum_iter, loss_mae / accum_iter, sim_loss / accum_iter, loss_sr/accum_iter
+        #total_loss.backward()
+        #for name,param in model.named_parameters():
+        #    if param.grad is None:
+        #        print(name)
+
         loss_scaler(total_loss, optimizer, parameters=model.parameters(),
                     update_grad=(data_iter_step + 1) % accum_iter == 0)
         if (data_iter_step + 1) % accum_iter == 0:
@@ -67,7 +72,7 @@ def train_one_epoch(model: torch.nn.Module,
         metric_logger.update(loss=total_loss_value)
         metric_logger.update(style_loss=sim_loss_value)
         metric_logger.update(mae_loss=loss_mae_value)
-        metric_logger.update(mae_loss=loss_sr_value)
+        metric_logger.update(sr_loss=loss_sr_value)
 
         lr = optimizer.param_groups[0]["lr"]
 

@@ -350,7 +350,7 @@ class MaskedAutoencoderViT(nn.Module):
         # embed tokens
         cls = None
         p = None
-        x = self.decoder_embed(x)
+        x = self.sr_embed(x)
         # append mask tokens to sequence
         if need_mask:
             mask_tokens = self.sr_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
@@ -369,7 +369,7 @@ class MaskedAutoencoderViT(nn.Module):
             
         x = self.sr_norm(x)
         cls = x[:, 0, :].squeeze()
-
+        #print("SR_PRED")
         # predictor projection
         x = self.sr_pred(x)
 
@@ -434,29 +434,39 @@ class MaskedAutoencoderViT(nn.Module):
         criteria = nn.KLDivLoss()
         return criteria(F.log_softmax(s/temperature),F.log_softmax(t/temperature))
 
-    def forward(self, imgs, smaller_imgs, mask_ratio=0.75, device=None, double_loss=False, epoch=0):
+    def forward(self, imgs, smaller_imgs, mask_ratio=0.75, device=None, double_loss=True, epoch=0):
+        middle_original=None
+        middle_small=None
         latent, mask, ids_restore,middle_original, _ = self.forward_encoder(imgs, mask_ratio, None)
         pred, z, _ = self.forward_decoder(latent, ids_restore, True, False)  # [N, L, p*p*3]
         loss_mae = self.forward_loss(imgs, pred, mask)
         if double_loss:
             latent_smaller, _, _, middle_small, _ = self.forward_encoder(smaller_imgs, 0, None)
-            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, ids_restore, False, False)
-            # p, p_, z, z_ = self.forward_linears(z, z_)
-            z, z_ = self.forward_linears_KL(z, z_)
-            kl_loss = self.knowledge_loss(z,z_)
-            loss_sr = self.forward_loss(imgs, pred, mask)
+            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, ids_restore, True, False)
+            p, p_, z, z_ = self.forward_linears(z, z_)
+            #z, z_ = self.forward_linears_KL(z, z_)
+            kl_loss = self.twin_loss(z,z_,p,p_)
+            #print("z",z.shape)
+            #print("KL",kl_loss)
+            
+            loss_sr = self.forward_loss(imgs, sr_pred, mask)
+            
             aligned = 0
-            for x_o,x_s in zip(middle_original.reverse()[:4], middle_small.reverse()[:4]):
+            #print("Original",middle_original)
+            #print("Small",middle_small.reverse()[:4])
+            for x_o,x_s in zip(middle_original[-4:], middle_small[-4:]):
                 aligned += self.align_loss(x_o,x_s)
             
+            #print("align",aligned)
             # total_loss = loss + 0.25 * (0.995 ** epoch) * sim_loss + aligned*0.1
+            #print("sr",loss_sr)
             total_loss = loss_mae + loss_sr + 0.25 * kl_loss + aligned*0.1
 
         else:
             sim_loss = torch.zeros(1).to(device)
             total_loss = loss_mae
 
-        return total_loss, sim_loss, loss_mae, loss_sr, pred, sr_pred, mask
+        return total_loss, kl_loss, loss_mae, loss_sr, pred, sr_pred, mask
 
 
 def mae_vit_base_patch16_dec512d8b(**kwargs):
