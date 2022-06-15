@@ -451,16 +451,17 @@ class MaskedAutoencoderViT(nn.Module):
             
             loss_sr = self.forward_loss(imgs, sr_pred, mask)
             
-            aligned = 0
+            # aligned = 0
             #print("Original",middle_original)
             #print("Small",middle_small.reverse()[:4])
-            for x_o,x_s in zip(middle_original[-4:], middle_small[-4:]):
-                aligned += self.align_loss(x_o,x_s)
+            # for x_o,x_s in zip(middle_original[-4:], middle_small[-4:]):
+                # aligned += self.align_loss(x_o,x_s)
             
             #print("align",aligned)
             # total_loss = loss + 0.25 * (0.995 ** epoch) * sim_loss + aligned*0.1
             #print("sr",loss_sr)
-            total_loss = loss_mae + loss_sr + 0.25 * kl_loss + aligned*0.1
+            total_loss = loss_mae + loss_sr + 0.25 * kl_loss 
+            # + aligned*0.1
 
         else:
             sim_loss = torch.zeros(1).to(device)
