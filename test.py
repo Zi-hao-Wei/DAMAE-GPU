@@ -1,8 +1,8 @@
-import models_mae
+# import models_mae
 import torchvision
 import torch
-from models_vit import vit_base_patch16
-from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+# from models_vit import vit_base_patch16
+# from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 import numpy as np
 
 
@@ -10,8 +10,11 @@ import numpy as np
 if __name__ == '__main__':
     # x = torch.rand(16, 3, 224, 224)
     # y = torch.rand(16, 3, 224, 224)
-    x1 = range(0,224,16)
-    print(x1)
+    x1 = torch.arange(0,224//16,2)
+    tmp = x1.clone()
+    for x in x1:
+        tmp += 224//16*x
+        print(tmp)
     
 
     # checkpoint = torch.load('/Users/panzixuan/Documents/AI/checkpoints/checkpoint-60.pth', map_location='cpu')

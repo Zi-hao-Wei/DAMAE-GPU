@@ -276,7 +276,7 @@ class MaskedAutoencoderViT(nn.Module):
         mask[:, :len_keep] = 0
         # unshuffle to get the binary mask
         mask = torch.gather(mask, dim=1, index=ids_restore)
-
+        print(ids_restore.shape)
         return x_masked, mask, ids_restore
 
     def forward_encoder(self, x, mask_ratio, pad):
@@ -311,7 +311,6 @@ class MaskedAutoencoderViT(nn.Module):
             middle.append(x[:, 0, :].squeeze().clone())
         x = self.norm(x)
         cls = x[:, 0, :].squeeze()
-        print(ids_restore.shape)
         return x, mask, ids_restore, middle, cls
 
     def forward_decoder(self, x, ids_restore, need_mask=True, global_pool=False):
