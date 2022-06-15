@@ -311,7 +311,7 @@ class MaskedAutoencoderViT(nn.Module):
             middle.append(x[:, 0, :].squeeze().clone())
         x = self.norm(x)
         cls = x[:, 0, :].squeeze()
-
+        print(ids_restore)
         return x, mask, ids_restore, middle, cls
 
     def forward_decoder(self, x, ids_restore, need_mask=True, global_pool=False):
