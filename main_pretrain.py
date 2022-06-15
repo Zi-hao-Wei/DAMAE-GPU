@@ -270,7 +270,7 @@ class SimMIMTransform:
             transforms.RandomGrayscale(p=1)])
 
         self.transform_smaller_img = transforms.Compose([
-            transforms.RandomResizedCrop((64, 64), scale=(1.0, 1.0), interpolation=3),  # 3 is bicubic
+            transforms.RandomResizedCrop((112, 112), scale=(1.0, 1.0), interpolation=3),  # 3 is bicubic
             transforms.RandomApply([
                 transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)  # not strengthened
             ], p=0.8),
