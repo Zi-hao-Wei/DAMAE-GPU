@@ -5,10 +5,10 @@ OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=4 distribu
     --batch_size 256 \
     --model mae_vit_base_patch16 \
     --norm_pix_loss \
-    --mask_ratio 0.75 --resume ./exp/checkpoint-550.pth\
+    --mask_ratio 0.75 \
     --epochs 800 \
     --warmup_epochs 40 \
     --blr 1.5e-4 --weight_decay 0.05 \
     --data_path ${IMAGENET_DIR} \
     --output_dir ./exp \
-    --log_dir ./exp > out.txt
+    --log_dir ./exp
