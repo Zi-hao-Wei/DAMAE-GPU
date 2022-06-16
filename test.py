@@ -12,9 +12,12 @@ if __name__ == '__main__':
     # y = torch.rand(16, 3, 224, 224)
     x1 = torch.arange(0,224//16,2)
     tmp = x1.clone()
+    ids_SR=[]
     for x in x1:
         tmp += 224//16*x
-        print(tmp)
+        ids_SR.append(tmp)
+    ids_SR=torch.stack(ids_SR,dim=-1)
+    print(ids_SR.shape)
     
 
     # checkpoint = torch.load('/Users/panzixuan/Documents/AI/checkpoints/checkpoint-60.pth', map_location='cpu')

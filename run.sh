@@ -11,5 +11,5 @@ python main_pretrain.py \
     --blr 1.5e-4 --weight_decay 0.05 \
     --data_path ${IMAGENET_DIR} \
     --output_dir ./exp \
-    --log_dir ./exp > out.txt \
+    --log_dir ./exp 
 

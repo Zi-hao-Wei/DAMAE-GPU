@@ -265,6 +265,7 @@ class MaskedAutoencoderViT(nn.Module):
 
         # sort noise for each sample
         ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
+        print(ids_shuffle[0])
         ids_restore = torch.argsort(ids_shuffle, dim=1)
 
         # keep the first subset
@@ -276,7 +277,7 @@ class MaskedAutoencoderViT(nn.Module):
         mask[:, :len_keep] = 0
         # unshuffle to get the binary mask
         mask = torch.gather(mask, dim=1, index=ids_restore)
-        print(ids_restore.shape)
+        print(ids_restore.shape, ids_restore[0])
         return x_masked, mask, ids_restore
 
     def forward_encoder(self, x, mask_ratio, pad):
