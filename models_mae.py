@@ -458,7 +458,7 @@ class MaskedAutoencoderViT(nn.Module):
         loss_mae = self.forward_loss(imgs, pred, mask)
         if double_loss:
             latent_smaller, _, _, middle_small, _ = self.forward_encoder(smaller_imgs, 0, None)
-            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, self.sr_ids, True, False)
+            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, self.sr_ids.to(device=latent_smaller.device), True, False)
             p, p_, z, z_ = self.forward_linears(z, z_)
             #z, z_ = self.forward_linears_KL(z, z_)
             kl_loss = self.twin_loss(z,z_,p,p_)
