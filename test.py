@@ -13,11 +13,20 @@ if __name__ == '__main__':
     x1 = torch.arange(0,224//16,2)
     tmp = x1.clone()
     ids_SR=[]
-    for x in x1:
-        tmp += 224//16*x
-        ids_SR.append(tmp)
-    ids_SR=torch.stack(ids_SR,dim=-1)
-    print(ids_SR.shape)
+    for x in range(len(x1)):
+        # print(tmp)
+        id_tmp = tmp + 224//16*2*x
+        ids_SR.append(id_tmp.clone())
+    ids_SR=torch.stack(ids_SR,dim=0).reshape(-1).tolist()
+    for i in range(0,196):
+        if i not in ids_SR:
+            ids_SR.append(i)   
+    ids_SR=torch.tensor(ids_SR)
+    ids_SR=ids_SR.repeat(256,1)
+
+    # print(ids_SR)
+
+    print(ids_SR)
     
 
     # checkpoint = torch.load('/Users/panzixuan/Documents/AI/checkpoints/checkpoint-60.pth', map_location='cpu')

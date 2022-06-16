@@ -169,7 +169,7 @@ class MaskedAutoencoderViT(nn.Module):
 
         self.align_loss = nn.L1Loss()
 
-
+        self.sr_ids = self.get_sr_ids(batch_size=256)
 
         """
         self.global_pool = global_pool
@@ -186,7 +186,23 @@ class MaskedAutoencoderViT(nn.Module):
         self.log_vars = nn.Parameter(torch.zeros(2))
 
         self.initialize_weights()
-
+    
+    def get_sr_ids(self,batch_size,img_size=224,patch_size=16):
+        x1 = torch.arange(0,img_size//patch_size,2)
+        tmp = x1.clone()
+        ids_SR=[]
+        for x in range(len(x1)):
+            # print(tmp)
+            id_tmp = tmp + 224//16*2*x
+            ids_SR.append(id_tmp.clone())
+        ids_SR=torch.stack(ids_SR,dim=0).reshape(-1).tolist()
+        for i in range(0,196):
+            if i not in ids_SR:
+                ids_SR.append(i)   
+        ids_SR=torch.tensor(ids_SR)
+        ids_SR=ids_SR.repeat(batch_size,1)
+        return ids_SR
+    
     def initialize_weights(self):
         # initialization
         # initialize (and freeze) pos_embed by sin-cos embedding
@@ -442,7 +458,7 @@ class MaskedAutoencoderViT(nn.Module):
         loss_mae = self.forward_loss(imgs, pred, mask)
         if double_loss:
             latent_smaller, _, _, middle_small, _ = self.forward_encoder(smaller_imgs, 0, None)
-            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, ids_restore, True, False)
+            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, self.sr_ids, True, False)
             p, p_, z, z_ = self.forward_linears(z, z_)
             #z, z_ = self.forward_linears_KL(z, z_)
             kl_loss = self.twin_loss(z,z_,p,p_)
