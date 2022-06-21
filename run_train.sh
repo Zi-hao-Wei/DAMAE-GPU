@@ -1,5 +1,5 @@
 #!/bin/bash
-IMAGENET_DIR="~/data/imagenet"
+IMAGENET_DIR="/data1/data/ImageNet"
 PRETRAIN_CHKPT="./exp/checkpoint-260.pth"
 
 python main_finetune.py \

@@ -153,23 +153,23 @@ class MaskedAutoencoderViT(nn.Module):
         self.pool_embed = nn.AvgPool2d(2, stride=2)
 
         #DAMAE SR
-        self.sr_embed = nn.Linear(embed_dim, decoder_embed_dim, bias=True)
+        # self.sr_embed = nn.Linear(embed_dim, decoder_embed_dim, bias=True)
+# 
+        # self.sr_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim))
 
-        self.sr_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim))
+        # self.sr_pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, decoder_embed_dim),
+                                            #   requires_grad=False)  # fixed sin-cos embedding
 
-        self.sr_pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, decoder_embed_dim),
-                                              requires_grad=False)  # fixed sin-cos embedding
+        # self.sr_blocks = nn.ModuleList([
+            # Block(decoder_embed_dim, decoder_num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer)
+            # for i in range(decoder_depth)])
 
-        self.sr_blocks = nn.ModuleList([
-            Block(decoder_embed_dim, decoder_num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer)
-            for i in range(decoder_depth)])
+        # self.sr_norm = norm_layer(decoder_embed_dim)
+        # self.sr_pred = nn.Linear(decoder_embed_dim, patch_size ** 2 * in_chans, bias=True)  # decoder to patch
 
-        self.sr_norm = norm_layer(decoder_embed_dim)
-        self.sr_pred = nn.Linear(decoder_embed_dim, patch_size ** 2 * in_chans, bias=True)  # decoder to patch
+        # self.align_loss = nn.L1Loss()
 
-        self.align_loss = nn.L1Loss()
-
-        self.sr_ids = self.get_sr_ids(batch_size=256)
+        # self.sr_ids = self.get_sr_ids(batch_size=256)
 
         """
         self.global_pool = global_pool
@@ -187,21 +187,21 @@ class MaskedAutoencoderViT(nn.Module):
 
         self.initialize_weights()
     
-    def get_sr_ids(self,batch_size,img_size=224,patch_size=16):
-        x1 = torch.arange(0,img_size//patch_size,2)
-        tmp = x1.clone()
-        ids_SR=[]
-        for x in range(len(x1)):
-            # print(tmp)
-            id_tmp = tmp + 224//16*2*x
-            ids_SR.append(id_tmp.clone())
-        ids_SR=torch.stack(ids_SR,dim=0).reshape(-1).tolist()
-        for i in range(0,196):
-            if i not in ids_SR:
-                ids_SR.append(i)   
-        ids_SR=torch.tensor(ids_SR)
-        ids_SR=ids_SR.repeat(batch_size,1)
-        return ids_SR
+    # def get_sr_ids(self,batch_size,img_size=224,patch_size=16):
+    #     x1 = torch.arange(0,img_size//patch_size,2)
+    #     tmp = x1.clone()
+    #     ids_SR=[]
+    #     for x in range(len(x1)):
+    #         # print(tmp)
+    #         id_tmp = tmp + 224//16*2*x
+    #         ids_SR.append(id_tmp.clone())
+    #     ids_SR=torch.stack(ids_SR,dim=0).reshape(-1).tolist()
+    #     for i in range(0,196):
+    #         if i not in ids_SR:
+    #             ids_SR.append(i)   
+    #     ids_SR=torch.tensor(ids_SR)
+    #     ids_SR=ids_SR.repeat(batch_size,1)
+    #     return ids_SR
     
     def initialize_weights(self):
         # initialization
@@ -215,9 +215,9 @@ class MaskedAutoencoderViT(nn.Module):
         self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
 
-        sr_pos_embed = get_2d_sincos_pos_embed(self.sr_pos_embed.shape[-1],
-                                                    int(self.patch_embed.num_patches ** .5), cls_token=True)
-        self.sr_pos_embed.data.copy_(torch.from_numpy(sr_pos_embed).float().unsqueeze(0))
+        # sr_pos_embed = get_2d_sincos_pos_embed(self.sr_pos_embed.shape[-1],
+                                                    # int(self.patch_embed.num_patches ** .5), cls_token=True)
+        # self.sr_pos_embed.data.copy_(torch.from_numpy(sr_pos_embed).float().unsqueeze(0))
 
         # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
         w = self.patch_embed.proj.weight.data
@@ -362,37 +362,37 @@ class MaskedAutoencoderViT(nn.Module):
 
         return x, cls, p
 
-    def forward_sr_decoder(self, x, ids_restore, need_mask=True, global_pool=False):
-        # embed tokens
-        cls = None
-        p = None
-        x = self.sr_embed(x)
-        # append mask tokens to sequence
-        if need_mask:
-            mask_tokens = self.sr_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
-            x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
-            x_ = torch.gather(x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2]))  # unshuffle
-            x = torch.cat([x[:, :1, :], x_], dim=1)  # append cls token
+    # def forward_sr_decoder(self, x, ids_restore, need_mask=True, global_pool=False):
+    #     # embed tokens
+    #     cls = None
+    #     p = None
+    #     x = self.sr_embed(x)
+    #     # append mask tokens to sequence
+    #     if need_mask:
+    #         mask_tokens = self.sr_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
+    #         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
+    #         x_ = torch.gather(x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2]))  # unshuffle
+    #         x = torch.cat([x[:, :1, :], x_], dim=1)  # append cls token
 
-            # add pos embed
-            x = x + self.sr_pos_embed
+    #         # add pos embed
+    #         x = x + self.sr_pos_embed
 
-        # apply Transformer blocks
-        for i, blk in enumerate(self.sr_blocks):
-            if torch.isnan(x).any():
-                print("break at block", i)
-            x = blk(x)
+    #     # apply Transformer blocks
+    #     for i, blk in enumerate(self.sr_blocks):
+    #         if torch.isnan(x).any():
+    #             print("break at block", i)
+    #         x = blk(x)
             
-        x = self.sr_norm(x)
-        cls = x[:, 0, :].squeeze()
-        #print("SR_PRED")
-        # predictor projection
-        x = self.sr_pred(x)
+    #     x = self.sr_norm(x)
+    #     cls = x[:, 0, :].squeeze()
+    #     #print("SR_PRED")
+    #     # predictor projection
+    #     x = self.sr_pred(x)
 
-        # remove cls token
-        x = x[:, 1:, :]
+    #     # remove cls token
+    #     x = x[:, 1:, :]
 
-        return x, cls, p
+    #     return x, cls, p
 
     def forward_linears(self, x1, x2):
         z1 = self.projector(x1)  # NxC
@@ -458,31 +458,31 @@ class MaskedAutoencoderViT(nn.Module):
         loss_mae = self.forward_loss(imgs, pred, mask)
         if double_loss:
             latent_smaller, _, _, middle_small, _ = self.forward_encoder(smaller_imgs, 0, None)
-            sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, self.sr_ids.to(device=latent_smaller.device), True, False)
+            # sr_pred, z_, _ = self.forward_sr_decoder(latent_smaller, self.sr_ids.to(device=latent_smaller.device), True, False)
             p, p_, z, z_ = self.forward_linears(z, z_)
             #z, z_ = self.forward_linears_KL(z, z_)
-            kl_loss = self.twin_loss(z,z_,p,p_)
+            twin_loss = self.twin_loss(z,z_,p,p_)
             #print("z",z.shape)
             #print("KL",kl_loss)
             
-            loss_sr = self.forward_loss(imgs, sr_pred, mask)
+            # loss_sr = self.forward_loss(imgs, sr_pred, mask)
             
             aligned = 0
             #print("Original",middle_original)
             #print("Small",middle_small.reverse()[:4])
-            for x_o,x_s in zip(middle_original[-4:], middle_small[-4:]):
-                aligned += self.align_loss(x_o,x_s)
+            # for x_o,x_s in zip(middle_original[-4:], middle_small[-4:]):
+                # aligned += self.align_loss(x_o,x_s)
             
             #print("align",aligned)
-            # total_loss = loss + 0.25 * (0.995 ** epoch) * sim_loss + aligned*0.1
+            total_loss = loss_mae + 0.25 * (0.995 ** epoch) * sim_loss
             #print("sr",loss_sr)
-            total_loss = loss_mae + loss_sr*0.25 + 0.25 * kl_loss + aligned*0.1
+            # total_loss = loss_mae + loss_sr*0.25 +0.25 * twin_loss + aligned*0.1
 
         else:
             sim_loss = torch.zeros(1).to(device)
             total_loss = loss_mae
 
-        return total_loss, kl_loss, loss_mae, loss_sr, aligned, pred, sr_pred, mask
+        return total_loss, twin_loss, loss_mae, pred, mask
 
 
 def mae_vit_base_patch16_dec512d8b(**kwargs):

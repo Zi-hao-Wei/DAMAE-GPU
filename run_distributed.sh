@@ -1,7 +1,7 @@
 #!/bin/bash
 IMAGENET_DIR="/data1/data/ImageNet"
 
-OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=4 distributed_train.py \
+OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=8 distributed_train.py \
     --batch_size 256 \
     --model mae_vit_base_patch16_1b \
     --norm_pix_loss \
