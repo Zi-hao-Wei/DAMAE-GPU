@@ -279,14 +279,15 @@ class MaskedAutoencoderViT(nn.Module):
         cls_token = self.cls_token + self.pos_embed[:, :1, :]
         cls_tokens = cls_token.expand(x.shape[0], -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)
-
+        xs = []
         # apply Transformer blocks
         for blk in self.blocks:
             x = blk(x)
+            xs.append(self.norm(x))
         x = self.norm(x)
         cls = x[:, 0, :].squeeze()
 
-        return x, mask, ids_restore, cls
+        return xs, x, mask, ids_restore, cls
 
     def forward_decoder(self, x, ids_restore, need_mask=True, global_pool=False):
         # embed tokens
@@ -313,7 +314,7 @@ class MaskedAutoencoderViT(nn.Module):
             if torch.isnan(x).any():
                 print("break at block", i)
             x = blk(x)
-            xs.append(x)
+            
             """
             if i == 0:
                 if not global_pool:
@@ -343,7 +344,7 @@ class MaskedAutoencoderViT(nn.Module):
         # remove cls token
         x = x[:, 1:, :]
 
-        return xs, x, cls, p
+        return x, cls, p
 
     def forward_linears(self, x1, x2):
         z1 = self.projector(x1)  # NxC
