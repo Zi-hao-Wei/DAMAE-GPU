@@ -47,24 +47,16 @@ def train_one_epoch(model: torch.nn.Module,
         samples = samples.to(device, non_blocking=True)
 
         with torch.cuda.amp.autocast():
-            total_loss, sim_loss, loss_mae, _, _, = model(samples, smaller_samples, mask_ratio=args.mask_ratio,
+            total_loss, sim_loss, loss, _, _, = model(samples, smaller_samples, mask_ratio=args.mask_ratio,
                                                       device=device, double_loss=True, epoch=epoch)
-        total_loss_value, sim_loss_value, loss_mae_value = total_loss.item(), sim_loss.item(), loss_mae.item(),
-        # loss_sr.item(), loss_align.item()
-        # print("Losses(total, new, mae) is {}, stopping training".format((total_loss_value, sim_loss_value, loss_value)))
+        total_loss_value, sim_loss_value, loss_value = total_loss.item(), sim_loss.item(), loss.item()
+        print("Losses(total, new, mae) is {}, stopping training".format((total_loss_value, sim_loss_value, loss_value)))
         # end modify #
         if not math.isfinite(total_loss_value):
             print("Loss is {}, stopping training".format(total_loss_value))
             sys.exit(1)
 
-        # total_loss, loss_mae, sim_loss, loss_sr, loss_align = total_loss / accum_iter, loss_mae / accum_iter, sim_loss / accum_iter, loss_sr/accum_iter, loss_align/accum_iter
-        total_loss, loss_mae, sim_loss = total_loss / accum_iter, loss_mae / accum_iter, sim_loss / accum_iter
-
-        #total_loss.backward()
-        #for name,param in model.named_parameters():
-        #    if param.grad is None:
-        #        print(name)
-
+        total_loss, loss, sim_loss = total_loss / accum_iter, loss / accum_iter, sim_loss / accum_iter
         loss_scaler(total_loss, optimizer, parameters=model.parameters(),
                     update_grad=(data_iter_step + 1) % accum_iter == 0)
         if (data_iter_step + 1) % accum_iter == 0:
@@ -73,19 +65,15 @@ def train_one_epoch(model: torch.nn.Module,
         torch.cuda.synchronize()
 
         metric_logger.update(loss=total_loss_value)
+        metric_logger.update(mae_loss=loss_value)
         metric_logger.update(style_loss=sim_loss_value)
-        metric_logger.update(mae_loss=loss_mae_value)
-        # metric_logger.update(sr_loss=loss_sr_value)
-        # metric_logger.update(align_loss=loss_align_value)
 
         lr = optimizer.param_groups[0]["lr"]
 
         metric_logger.update(lr=lr)
 
         loss_value_reduce = misc.all_reduce_mean(total_loss_value)
-        loss_decoder_reduce = misc.all_reduce_mean(loss_mae_value)
-        # loss_sr_reduce = misc.all_reduce_mean(loss_sr_value)
-        # loss_align_reduce = misc.all_reduce_mean(loss_align_value)
+        loss_decoder_reduce = misc.all_reduce_mean(loss_value)
         loss_encoder_reduce = misc.all_reduce_mean(sim_loss_value)
         if log_writer is not None and (data_iter_step + 1) % accum_iter == 0:
             """ We use epoch_1000x as the x-axis in tensorboard.
@@ -95,8 +83,6 @@ def train_one_epoch(model: torch.nn.Module,
             log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
             log_writer.add_scalar('contrastive_loss', loss_encoder_reduce, epoch_1000x)
             log_writer.add_scalar('decoder_loss', loss_decoder_reduce, epoch_1000x)
-            # log_writer.add_scalar('sr_loss', loss_sr_reduce, epoch_1000x)
-            # log_writer.add_scalar('align_loss', loss_align_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
 
     # gather the stats from all processes
