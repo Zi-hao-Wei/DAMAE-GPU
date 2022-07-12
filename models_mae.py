@@ -16,7 +16,8 @@ import torch.nn as nn
 import torchvision
 import torch.nn.functional as F
 
-from timm.models.vision_transformer import Block, to_2tuple
+from timm.models.vision_transformer import Block
+from timm.models.layers import to_2tuple
 
 from util.pos_embed import get_2d_sincos_pos_embed
 
