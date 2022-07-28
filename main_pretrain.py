@@ -34,7 +34,7 @@ from PIL import ImageFilter, ImageOps
 import random
 
 import models_mae
-
+import wandb
 from engine_pretrain import train_one_epoch
 
 
@@ -298,4 +298,7 @@ if __name__ == '__main__':
     args = args.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    if args.local_rank == 0:
+        wandb.init(config=args, name="DAMAE-MR-0.75-"+str(args.epochs)+"+"+str(args.blr),project="DAMAE-pretrain")
+
     main(args)

@@ -16,7 +16,7 @@ import torch
 
 import util.misc as misc
 import util.lr_sched as lr_sched
-
+import wandb
 
 def train_one_epoch(model: torch.nn.Module,
                     data_loader: Iterable,
@@ -50,7 +50,11 @@ def train_one_epoch(model: torch.nn.Module,
             total_loss, sim_loss, loss, _, _, = model(samples, smaller_samples, mask_ratio=args.mask_ratio,
                                                       device=device, double_loss=True, epoch=epoch)
         total_loss_value, sim_loss_value, loss_value = total_loss.item(), sim_loss.item(), loss.item()
-        print("Losses(total, new, mae) is {}, stopping training".format((total_loss_value, sim_loss_value, loss_value)))
+        
+        if args.local_rank == 0:
+            wandb.log({"epoch":epoch,"loss":total_loss_value,"MAE_loss":loss_value,"SIM_loss":sim_loss_value})
+
+        # print("Losses(total, new, mae) is {}, stopping training".format((total_loss_value, sim_loss_value, loss_value)))
         # end modify #
         if not math.isfinite(total_loss_value):
             print("Loss is {}, stopping training".format(total_loss_value))
