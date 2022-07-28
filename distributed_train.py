@@ -27,7 +27,7 @@ import random
 import models_mae
 
 from engine_pretrain import train_one_epoch
-
+import wandb 
 
 def get_args_parser():
     parser = argparse.ArgumentParser('MAE pre-training', add_help=False)
